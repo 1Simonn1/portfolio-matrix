@@ -466,6 +466,7 @@ footer{color:var(--dim);font-size:12px;line-height:1.6;padding-top:6px;max-width
         <input id="fhKey" type="password" autocomplete="off" spellcheck="false" placeholder="Pega tu clave" style="min-width:240px">
         <span class="msg">Se guarda solo en este navegador, nunca dentro de tus datos exportados.</span>
       </div>
+      <div class="row-actions" style="margin-top:8px"><button class="btn" type="button" id="bDetect">Detectar tickers y sectores</button><span class="msg" id="detMsg" aria-live="polite"></span><span class="msg">Rellena el ticker y el sector de las posiciones que solo tienen el código ISIN o no tienen sector. Solo reconoce empresas de EE. UU.</span></div>
     </div>
 
     <div class="grid">
@@ -1066,6 +1067,8 @@ function importTR(rows){
   structural();
   var u=Object.keys(unk);
   msg.textContent='Trade Republic: '+out.length+(out.length===1?' posición':' posiciones')+', efectivo estimado '+money(S.cash===''?0:num(S.cash))+', aportado '+money(num(S.contributed))+', realizada '+money(num(S.realized))+'. Añade el precio actual de cada posición: hasta entonces el valor mostrado es el coste.'+(u.length?' Movimientos no reconocidos: '+u.join(', ')+'.':'');
+  var nos=out.filter(function(x){return !x.s}).length;
+  if(nos)msg.textContent+=' '+nos+(nos===1?' posición no tiene':' posiciones no tienen')+' sector: Trade Republic no lo incluye en el CSV. Pulsa «Detectar tickers y sectores» (necesita tu clave de Finnhub) o asígnalo a mano en la tabla de «Posiciones» de abajo.';
   msg.className='msg okk';$('impText').value='';
 }
 $('impFile').addEventListener('click',function(){$('impFileIn').click()});
@@ -1155,6 +1158,39 @@ async function updatePrices(){
 }
 function fmtDay(d){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d||'');return m?(+m[3])+' '+MON[+m[2]-1]+' '+m[1]:''}
 var UPD_DELAY=300;
+
+/* ---------- Detect tickers and sectors (Finnhub company profile) ---------- */
+var IND=[[/utilit/,'Servicios públicos'],[/real estate|reit/,'Inmobiliario'],[/semiconductor|technology|software|it services|electronic|computer|hardware/,'Tecnología'],[/health|pharma|biotech|life sci|medical/,'Salud'],[/bank|financial|insurance|capital markets|asset management/,'Financieros'],[/energy|oil|coal/,'Energía'],[/media|telecom|communication|entertainment|interactive/,'Comunicación'],[/food|beverage|tobacco|household products|personal products|supermarket|packaged/,'Consumo Básico'],[/retail|automobile|auto components|apparel|textile|luxury|hotel|restaurant|leisure|consumer products|household durables|homebuild|travel|casino/,'Discrecional'],[/chemical|metal|mining|steel|paper|forest|packaging|materials/,'Materiales'],[/machinery|aerospace|defense|airline|transport|logistics|industrial|electrical equipment|building|construction|commercial services|professional services|trading companies|road|rail|marine|air freight/,'Industriales']];
+function mapInd(i){i=String(i||'').toLowerCase();for(var k=0;k<IND.length;k++)if(IND[k][0].test(i))return IND[k][1];return ''}
+var detBusy=false;
+function detMsg(t,c){var e=document.getElementById('detMsg');e.textContent=t;e.className='msg '+(c||'')}
+async function detectInfo(){
+  if(detBusy)return;
+  var isinRe=/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
+  var todo=S.positions.filter(function(p){var t=String(p.t||'').trim().toUpperCase();return isinRe.test(t)||(!has(p.s)&&t)});
+  if(!todo.length){detMsg('Todas las posiciones tienen ya ticker y sector.','okk');return}
+  var key=getKey();if(!key){detMsg(updErr({code:'nokey'}),'err');return}
+  detBusy=true;document.getElementById('bDetect').disabled=true;
+  var found=0,miss=[],stop=null;
+  try{
+    for(var i=0;i<todo.length;i++){
+      var p=todo[i],t=String(p.t).trim().toUpperCase(),isIsin=isinRe.test(t);
+      if(i)await sleep(UPD_DELAY);
+      detMsg('Buscando '+(p.n||t)+' ('+(i+1)+' de '+todo.length+')…','');
+      var q=await getJson('https://finnhub.io/api/v1/stock/profile2?'+(isIsin?'isin=':'symbol=')+encodeURIComponent(t)+'&token='+encodeURIComponent(key));
+      if(!q||!q.ticker){miss.push(p.n||t);continue}
+      var sec=mapInd(q.finnhubIndustry),did=false;
+      if(isIsin){p.t=q.ticker;did=true}
+      if(!has(p.s)&&sec){p.s=sec;did=true}
+      if(did)found++;else miss.push(p.n||t);
+    }
+  }catch(e){stop=e}
+  if(found){renderEditor();updateLists();changed()}
+  detBusy=false;document.getElementById('bDetect').disabled=false;
+  if(stop)detMsg(updErr(stop)+(found?' Antes de parar se completaron '+found+'.':''),'err');
+  else detMsg('Completadas '+found+' de '+todo.length+(miss.length?'. Sin datos para: '+miss.slice(0,6).join(', ')+(miss.length>6?'…':'')+'. Asígnalas a mano.':'.'),found?'okk':'err');
+}
+document.getElementById('bDetect').addEventListener('click',detectInfo);
 [].forEach.call(document.querySelectorAll('.js-upd'),function(b){b.addEventListener('click',updatePrices)});
 
 /* ---------- Wiring: panel ---------- */
