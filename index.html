@@ -256,7 +256,7 @@ footer{color:var(--dim);font-size:12px;line-height:1.6;padding-top:6px;max-width
     </div>
 
     <nav class="nav" aria-label="Secciones">
-      <a href="#posiciones">Posiciones</a><a href="#sectores">Sectores</a><a href="#resultados">Resultados</a><a href="#ingresos">Ingresos e impuestos</a><a href="#proyeccion">Proyección</a>
+      <a href="#posiciones">Posiciones</a><a href="#sectores">Sectores</a><a href="#geografia">Geografía</a><a href="#resultados">Resultados</a><a href="#ingresos">Ingresos e impuestos</a><a href="#proyeccion">Proyección</a>
     </nav>
 
     <section class="grid" aria-label="Resumen">
@@ -304,6 +304,23 @@ footer{color:var(--dim);font-size:12px;line-height:1.6;padding-top:6px;max-width
           </table>
         </div>
         <p class="note" id="tblNote"></p>
+      </div>
+    </section>
+
+    <section class="grid" id="geografia" aria-label="Diversificación geográfica">
+      <div class="card c7">
+        <div class="card-h"><h2>Diversificación geográfica</h2><span class="aside" id="geoAside"></span></div>
+        <div class="sector-split">
+          <div class="donut-box" id="donutGeo"></div>
+          <div id="geoList"></div>
+        </div>
+      </div>
+      <div class="col c5">
+        <div class="card">
+          <div class="card-h"><h2>Por país</h2></div>
+          <div id="countryList"></div>
+          <p class="note" id="geoNote"></p>
+        </div>
       </div>
     </section>
 
@@ -450,12 +467,12 @@ footer{color:var(--dim);font-size:12px;line-height:1.6;padding-top:6px;max-width
       <div class="tbl-wrap">
         <table class="ed">
           <thead><tr>
-            <th>Ticker</th><th>Empresa</th><th>Sector</th><th>Tipo</th><th class="r">Acciones</th><th class="r">Precio</th><th class="r">Valor actual</th><th class="r">Coste total</th><th class="r">Dividendos/año</th><th class="r">Vs. máx. %</th><th></th>
+            <th>Ticker</th><th>Empresa</th><th>Sector</th><th>País</th><th>Tipo</th><th class="r">Acciones</th><th class="r">Precio</th><th class="r">Valor actual</th><th class="r">Coste total</th><th class="r">Dividendos/año</th><th class="r">Vs. máx. %</th><th></th>
           </tr></thead>
           <tbody id="edBody"></tbody>
         </table>
       </div>
-      <datalist id="dlSector"></datalist><datalist id="dlType"></datalist>
+      <datalist id="dlSector"></datalist><datalist id="dlCountry"></datalist><datalist id="dlType"></datalist>
       <div class="row-actions">
         <button class="btn primary" type="button" id="bAdd">Añadir posición</button>
         <button class="btn js-upd" type="button">Actualizar precios</button><span class="msg updMsg" aria-live="polite"></span>
@@ -466,7 +483,7 @@ footer{color:var(--dim);font-size:12px;line-height:1.6;padding-top:6px;max-width
         <input id="fhKey" type="password" autocomplete="off" spellcheck="false" placeholder="Pega tu clave" style="min-width:240px">
         <span class="msg">Se guarda solo en este navegador, nunca dentro de tus datos exportados.</span>
       </div>
-      <div class="row-actions" style="margin-top:8px"><button class="btn" type="button" id="bDetect">Detectar tickers y sectores</button><span class="msg" id="detMsg" aria-live="polite"></span><span class="msg">Rellena el ticker y el sector de las posiciones que solo tienen el código ISIN o no tienen sector. Solo reconoce empresas de EE. UU.</span></div>
+      <div class="row-actions" style="margin-top:8px"><button class="btn" type="button" id="bDetect">Detectar tickers y sectores</button><span class="msg" id="detMsg" aria-live="polite"></span><span class="msg">Rellena el ticker, el sector y el país de las posiciones que solo tienen el código ISIN o les falta algo. Solo reconoce empresas de EE. UU.</span></div>
     </div>
 
     <div class="grid">
@@ -505,6 +522,37 @@ function num(v){
   var n=parseFloat(s);return isFinite(n)?n:0;
 }
 
+/* ---------- Countries and geographic zones ---------- */
+var CT=[
+['Estados Unidos','EE. UU.','US','eeuu','usa','us','unitedstates','estadosunidosdeamerica'],
+['Canadá','Canadá','CA','canada'],
+['México','México','MX','mexico'],
+['Guatemala','Centroamérica y Caribe','GT'],['Costa Rica','Centroamérica y Caribe','CR'],['Panamá','Centroamérica y Caribe','PA','panama'],['Honduras','Centroamérica y Caribe','HN'],['El Salvador','Centroamérica y Caribe','SV'],['Nicaragua','Centroamérica y Caribe','NI'],['Belice','Centroamérica y Caribe','BZ'],['Cuba','Centroamérica y Caribe','CU'],['República Dominicana','Centroamérica y Caribe','DO','dominicana'],['Jamaica','Centroamérica y Caribe','JM'],['Bahamas','Centroamérica y Caribe','BS'],['Islas Caimán','Centroamérica y Caribe','KY','caiman','caymanislands'],['Puerto Rico','Centroamérica y Caribe','PR'],
+['Argentina','Sudamérica','AR'],['Brasil','Sudamérica','BR','brazil'],['Chile','Sudamérica','CL'],['Colombia','Sudamérica','CO'],['Perú','Sudamérica','PE','peru'],['Uruguay','Sudamérica','UY'],['Venezuela','Sudamérica','VE'],['Ecuador','Sudamérica','EC'],['Bolivia','Sudamérica','BO'],['Paraguay','Sudamérica','PY'],
+['España','Europa','ES','spain'],['Francia','Europa','FR','france'],['Alemania','Europa','DE','germany'],['Italia','Europa','IT','italy'],['Países Bajos','Europa','NL','holanda','netherlands','paisesbajos'],['Reino Unido','Europa','GB','uk','unitedkingdom','inglaterra','gran bretana','granbretana'],['Suiza','Europa','CH','switzerland'],['Irlanda','Europa','IE','ireland'],['Bélgica','Europa','BE','belgica','belgium'],['Portugal','Europa','PT'],['Suecia','Europa','SE','sweden'],['Noruega','Europa','NO','norway'],['Dinamarca','Europa','DK','denmark'],['Finlandia','Europa','FI','finland'],['Austria','Europa','AT'],['Polonia','Europa','PL','poland'],['Luxemburgo','Europa','LU','luxembourg'],['Grecia','Europa','GR','greece'],['República Checa','Europa','CZ','chequia'],['Hungría','Europa','HU','hungria'],['Rusia','Europa','RU','russia'],['Islandia','Europa','IS'],
+['China','Asia','CN'],['Japón','Asia','JP','japon','japan'],['Corea del Sur','Asia','KR','corea','southkorea'],['India','Asia','IN'],['Taiwán','Asia','TW','taiwan'],['Hong Kong','Asia','HK'],['Singapur','Asia','SG','singapore'],['Indonesia','Asia','ID'],['Tailandia','Asia','TH','thailand'],['Malasia','Asia','MY','malaysia'],['Filipinas','Asia','PH','philippines'],['Vietnam','Asia','VN'],['Israel','Asia','IL'],['Arabia Saudí','Asia','SA','arabiasaudita','saudiarabia'],['Emiratos Árabes Unidos','Asia','AE','emiratos','uae'],['Catar','Asia','QA','qatar'],['Turquía','Asia','TR','turquia','turkey'],['Kazajistán','Asia','KZ','kazajistan'],
+['Sudáfrica','África','ZA','sudafrica','southafrica'],['Egipto','África','EG','egypt'],['Nigeria','África','NG'],['Marruecos','África','MA','morocco'],['Kenia','África','KE','kenya'],
+['Australia','Oceanía','AU'],['Nueva Zelanda','Oceanía','NZ','newzealand'],
+['Global / ETF','Global / ETF','','global','etf','mundial','mundo','fondo','internacional']
+];
+var ZONES=['EE. UU.','Canadá','México','Centroamérica y Caribe','Sudamérica','Europa','Asia','África','Oceanía','Global / ETF','Otros','Sin país'];
+var ZC={'EE. UU.':'#3A7BD5','Canadá':'#E0603A','México':'#2DB784','Centroamérica y Caribe':'#A6D854','Sudamérica':'#F0A030','Europa':'#8C6BD6','Asia':'#E58BBE','África':'#A5693A','Oceanía':'#86D8EE','Global / ETF':'#F2E24D','Otros':'#B4BDCB','Sin país':'#6B7A90'};
+var CIDX=null;
+function normK(x){return String(x==null?'':x).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'')}
+function findCountry(v){
+  if(!CIDX){CIDX={};CT.forEach(function(c){CIDX[normK(c[0])]=c;if(c[2])CIDX[normK(c[2])]=c;c.slice(3).forEach(function(a){CIDX[normK(a)]=c})})}
+  var k=normK(v);return k?(CIDX[k]||null):null;
+}
+function zoneOf(co){if(!has(co))return 'Sin país';var c=findCountry(co);return c?c[1]:'Otros'}
+var TICKER_CO={MELI:'Argentina',ONON:'Suiza'};
+var ISINRE=/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
+function countryFromIsin(isin,name){
+  if(!ISINRE.test(isin||''))return '';
+  var pre=isin.slice(0,2);
+  if(pre==='IE'||pre==='LU'){return /etf|ucits|ishares|vanguard|xtrackers|amundi|invesco|spdr|lyxor|wisdomtree|index|fund/i.test(name||'')?'Global / ETF':''}
+  var c=findCountry(pre);return c?c[0]:'';
+}
+
 /* ---------- Example data (from the user's screenshots) ---------- */
 var INV=164170.85;
 var RAW=[['META','Meta Platforms','Tecnología',7.66],['INTU','Intuit','Tecnología',7.59],['AMZN','Amazon','Discrecional',7.52],['GOOGL','Alphabet','Tecnología',7.06],['NOW','ServiceNow','Tecnología',6.61],['PEP','PepsiCo','Consumo Básico',6.53],['NFLX','Netflix','Comunicación',6.49],['O','Realty Income','Inmobiliario',5.41],['UNH','UnitedHealth','Salud',5.00],['TLT','iShares 20+ Year Treasury','Bonos',4.98],['TSN','Tyson Foods','Consumo Básico',4.40],['PFE','Pfizer','Salud',3.74],['ADBE','Adobe','Tecnología',3.63],['CMG','Chipotle','Discrecional',3.54],['CRM','Salesforce','Tecnología',3.46],['MCD',"McDonald's",'Discrecional',3.41],['SPGI','S&P Global','Financieros',2.93],['MELI','MercadoLibre','Discrecional',2.66],['CELH','Celsius Holdings','Consumo Básico',2.54],['SOFI','SoFi Technologies','Financieros',1.70],['SFM','Sprouts Farmers Market','Consumo Básico',1.33],['TMUS','T-Mobile US','Comunicación',1.26],['ONON','On Holding','Discrecional',1.17]];
@@ -526,13 +574,13 @@ function exampleState(){
   var firstPay=pay.indexOf(true);
   d[firstPay]=round2(d[firstPay]+2658.74-d.reduce(function(a,b){return a+b},0));
   return {example:true,name:'Portfolio Matrix',asOf:'Oct 2026',cur:'$',cash:229.52,realized:58770.60,contributed:86581.80,ret:18.66,sp:13.77,projRate:17.9345,taxDiv:15,taxGain:15,gainBase:3287.33,history:EX_HIST,
-    positions:rows.map(function(r,i){return {id:uid(),t:r[0],n:r[1],s:r[2],ty:EX_TYPE[r[0]]||'Largo plazo',shares:'',price:'',value:v[i],cost:c[i],div:d[i]||'',drop:EX_DROP[r[0]]!=null?EX_DROP[r[0]]:''}})};
+    positions:rows.map(function(r,i){return {id:uid(),t:r[0],n:r[1],s:r[2],ty:EX_TYPE[r[0]]||'Largo plazo',co:TICKER_CO[r[0]]||'Estados Unidos',shares:'',price:'',value:v[i],cost:c[i],div:d[i]||'',drop:EX_DROP[r[0]]!=null?EX_DROP[r[0]]:''}})};
 }
 function blankState(){return {example:false,pricesNote:'',name:'Portfolio Matrix',asOf:'',cur:'$',cash:'',realized:'',contributed:'',ret:'',sp:'',projRate:'10',taxDiv:'15',taxGain:'15',gainBase:'',history:'',positions:[]}}
 function normalize(o){
   var b=blankState();var s={};
   Object.keys(b).forEach(function(k){s[k]=(o&&o[k]!=null)?o[k]:b[k]});
-  s.positions=((o&&o.positions)||[]).map(function(p){return {id:p.id||uid(),t:p.t||'',n:p.n||'',s:p.s||'',ty:p.ty||'',shares:p.shares==null?'':p.shares,price:p.price==null?'':p.price,value:p.value==null?'':p.value,cost:p.cost==null?'':p.cost,div:p.div==null?'':p.div,drop:p.drop==null?'':p.drop}});
+  s.positions=((o&&o.positions)||[]).map(function(p){return {id:p.id||uid(),t:p.t||'',n:p.n||'',s:p.s||'',ty:p.ty||'',co:p.co||'',shares:p.shares==null?'':p.shares,price:p.price==null?'':p.price,value:p.value==null?'':p.value,cost:p.cost==null?'':p.cost,div:p.div==null?'':p.div,drop:p.drop==null?'':p.drop}});
   s.example=!!(o&&o.example);
   return s;
 }
@@ -594,17 +642,21 @@ function buildModel(S){
     var sh=num(p.shares),pr=num(p.price);
     var v=(sh>0&&pr>0)?sh*pr:num(p.value);
     var cost=num(p.cost);
-    return {id:p.id,t:String(p.t||'').trim().toUpperCase(),n:String(p.n||'').trim(),s:String(p.s||'').trim()||'Sin sector',ty:String(p.ty||'').trim()||'Sin clasificar',v:v,cost:cost,hasCost:cost>0,div:num(p.div),drop:has(p.drop)?num(p.drop):null};
+    return {id:p.id,t:String(p.t||'').trim().toUpperCase(),n:String(p.n||'').trim(),s:String(p.s||'').trim()||'Sin sector',ty:String(p.ty||'').trim()||'Sin clasificar',co:(findCountry(p.co)?findCountry(p.co)[0]:String(p.co||'').trim()),z:zoneOf(p.co),v:v,cost:cost,hasCost:cost>0,div:num(p.div),drop:has(p.drop)?num(p.drop):null};
   }).filter(function(p){return p.v>0&&(p.t||p.n)});
   var inv=P.reduce(function(a,p){return a+p.v},0);
   P.forEach(function(p){p.p=p.v/inv*100;p.g=p.hasCost?(p.v-p.cost)/p.cost*100:null;p.name=p.n||p.t;p.label=p.t||p.n});
   P.sort(function(a,b){return b.p-a.p});
-  var secMap={},tyMap={};
+  var secMap={},tyMap={},zMap={},coMap={};
   P.forEach(function(p){
+    var z=zMap[p.z]||(zMap[p.z]={z:p.z,p:0,v:0,n:0});z.p+=p.p;z.v+=p.v;z.n++;
+    var ck=p.co||'Sin país',co=coMap[ck]||(coMap[ck]={co:ck,z:p.z,p:0,v:0,n:0});co.p+=p.p;co.v+=p.v;co.n++;
     var s=secMap[p.s]||(secMap[p.s]={s:p.s,p:0,v:0,n:0});s.p+=p.p;s.v+=p.v;s.n++;
     var t=tyMap[p.ty]||(tyMap[p.ty]={t:p.ty,p:0,v:0});t.p+=p.p;t.v+=p.v;
   });
   var sectors=Object.keys(secMap).map(function(k){return secMap[k]}).sort(function(a,b){return b.p-a.p});
+  var zones=Object.keys(zMap).map(function(k){return zMap[k]}).sort(function(a,b){return b.p-a.p});
+  var countries=Object.keys(coMap).map(function(k){return coMap[k]}).sort(function(a,b){return b.p-a.p});
   var types=Object.keys(tyMap).map(function(k){return tyMap[k]}).sort(function(a,b){return b.p-a.p});
   assignColors(sectors.map(function(s){return s.s}));
   P.forEach(function(p){
@@ -620,7 +672,7 @@ function buildModel(S){
   var taxDiv=div*num(S.taxDiv)/100,taxGain=num(S.gainBase)*num(S.taxGain)/100;
   var top5=P.slice(0,5).reduce(function(a,p){return a+p.p},0),top10=P.slice(0,10).reduce(function(a,p){return a+p.p},0);
   var hhi=P.reduce(function(a,p){return a+Math.pow(p.p/100,2)},0);
-  return {P:P,n:P.length,inv:inv,cash:cash,total:total,sectors:sectors,types:types,
+  return {P:P,n:P.length,inv:inv,cash:cash,total:total,sectors:sectors,zones:zones,countries:countries,types:types,
     hasCost:withCost.length>0,missingCost:P.length-withCost.length,costSum:costSum,unreal:unreal,realized:realized,totalGain:totalGain,
     anyGain:withCost.length>0||has(S.realized),contrib:contrib,totalRet:contrib>0?totalGain/contrib*100:null,
     div:div,yld:inv>0?div/inv*100:0,taxDiv:taxDiv,taxGain:taxGain,
@@ -771,15 +823,43 @@ function renderSecList(){
   $('secList').innerHTML=M.sectors.length?M.sectors.map(function(s,ix){
     return '<button type="button" class="srow" data-s="'+esc(s.s)+'" style="'+(st.sector===s.s?'background:var(--s2)':'')+'"><span class="n"><span class="dot" style="background:'+secColor(s.s)+'"></span>'+esc(s.s)+' <span style="color:var(--dim);font-size:12px">· '+s.n+(s.n===1?' posición':' posiciones')+'</span></span><span class="p">'+pc(s.p,1)+'</span><span class="bar"><i style="width:'+s.p/mx*100+'%;background:'+secColor(s.s)+'"></i></span><span class="amt">'+money(s.v,0)+'</span></button>';
   }).join(''):'<div class="empty">Añade sectores a tus posiciones en «Mis datos».</div>';
-  [].forEach.call(document.querySelectorAll('.srow'),function(r){
+  [].forEach.call(document.querySelectorAll('#secList .srow'),function(r){
     r.addEventListener('pointerenter',function(){dSec.set(r.dataset.s)});
     r.addEventListener('pointerleave',function(){dSec.set(null)});
     r.addEventListener('click',function(){setSector(r.dataset.s);$('posiciones').scrollIntoView({behavior:'smooth',block:'start'})});
   });
 }
+var dGeo={set:function(){}};
+function renderGeo(){
+  var Z=M.zones;
+  dGeo=donut($('donutGeo'),Z.map(function(z){return {id:z.z,label:z.z,color:ZC[z.z]||'#B4BDCB',value:z.p,pct:z.p,amount:z.v}}),{top:'Zonas',main:String(Z.length),sub:'geográficas'},function(id){
+    [].forEach.call(document.querySelectorAll('#geoList .srow'),function(r){r.classList.toggle('hl',r.dataset.z===id)});
+  },function(){},false);
+  var mx=Z.length?Z[0].p:1;
+  $('geoList').innerHTML=Z.length?Z.map(function(z){
+    var c=ZC[z.z]||'#B4BDCB';
+    return '<div class="srow" data-z="'+esc(z.z)+'" style="cursor:default"><span class="n"><span class="dot" style="background:'+c+'"></span>'+esc(z.z)+' <span style="color:var(--dim);font-size:12px">· '+z.n+(z.n===1?' posición':' posiciones')+'</span></span><span class="p">'+pc(z.p,1)+'</span><span class="bar"><i style="width:'+z.p/mx*100+'%;background:'+c+'"></i></span><span class="amt">'+money(z.v,0)+'</span></div>';
+  }).join(''):'<div class="empty">Añade el país de cada posición en «Mis datos».</div>';
+  [].forEach.call(document.querySelectorAll('#geoList .srow'),function(r){
+    r.addEventListener('pointerenter',function(){dGeo.set(r.dataset.z)});
+    r.addEventListener('pointerleave',function(){dGeo.set(null)});
+  });
+  var cm=M.countries.length?M.countries[0].p:1;
+  $('countryList').innerHTML=M.countries.length?M.countries.map(function(c){
+    var col=ZC[c.z]||'#B4BDCB';
+    return '<div class="srow" style="cursor:default"><span class="n"><span class="dot" style="background:'+col+'"></span>'+esc(c.co)+' <span style="color:var(--dim);font-size:12px">· '+esc(c.z)+'</span></span><span class="p">'+pc(c.p,1)+'</span><span class="bar"><i style="width:'+c.p/cm*100+'%;background:'+col+'"></i></span></div>';
+  }).join(''):'<div class="empty">Sin datos todavía.</div>';
+  var noco=M.P.filter(function(p){return !p.co}).length,na=0;
+  Z.forEach(function(z){if(z.z==='EE. UU.'||z.z==='Canadá'||z.z==='México'||z.z==='Centroamérica y Caribe'||z.z==='Sudamérica')na+=z.p});
+  $('geoAside').textContent=Z.length&&Z[0].z!=='Sin país'?(Z[0].z+' concentra '+pc(Z[0].p,1)):'';
+  var note=[];
+  if(Z.length&&na>0)note.push('América suma '+pc(na,1)+' de la cartera.');
+  if(noco)note.push(noco+(noco===1?' posición no tiene':' posiciones no tienen')+' país: añádelo en «Mis datos» (columna País).');
+  $('geoNote').textContent=note.join(' ');
+}
 function renderSectors(){
   dSec=donut($('donutSec'),M.sectors.map(function(s){return {id:s.s,label:s.s,color:secColor(s.s),value:s.p,pct:s.p,amount:s.v}}),{top:'Sectores',main:String(M.sectors.length),sub:'diversificación'},function(id){
-    [].forEach.call(document.querySelectorAll('.srow'),function(r){r.classList.toggle('hl',r.dataset.s===id)});
+    [].forEach.call(document.querySelectorAll('#secList .srow'),function(r){r.classList.toggle('hl',r.dataset.s===id)});
   },function(id){setSector(id);$('posiciones').scrollIntoView({behavior:'smooth',block:'start'})},false);
   renderSecList();
   $('typeStack').innerHTML=M.types.map(function(t){return '<div style="width:'+t.p+'%;background:'+typeColor(t.t)+'">'+(t.p>=7?Math.round(t.p)+'%':'')+'</div>'}).join('');
@@ -879,7 +959,7 @@ function resetProj(){PJ.rate=projRate0();PJ.years=20;PJ.contrib=0}
 
 function renderPanel(){
   CUR=S.cur||'$';
-  renderHeader();renderHero();renderPositions();renderSectors();renderResults();renderHistory();renderIncome();renderProjection();
+  renderHeader();renderHero();renderPositions();renderSectors();renderGeo();renderResults();renderHistory();renderIncome();renderProjection();
 }
 
 /* ---------- Editor ---------- */
@@ -888,7 +968,7 @@ function rowHtml(p){
   var val=auto?(num(p.shares)*num(p.price)).toFixed(2):(p.value===''?'':String(p.value));
   function inp(f,cls,v,al){return '<input class="in '+cls+'" data-f="'+f+'" value="'+esc(v)+'" aria-label="'+al+'">'}
   return '<tr data-id="'+esc(p.id)+'"><td>'+inp('t','mono w-t',p.t,'Ticker')+'</td><td>'+inp('n','w-n',p.n,'Empresa')+'</td>'
-   +'<td><input class="in w-s" data-f="s" list="dlSector" value="'+esc(p.s)+'" aria-label="Sector"></td><td><input class="in w-s" data-f="ty" list="dlType" value="'+esc(p.ty)+'" aria-label="Tipo"></td>'
+   +'<td><input class="in w-s" data-f="s" list="dlSector" value="'+esc(p.s)+'" aria-label="Sector"></td><td><input class="in w-s" data-f="co" list="dlCountry" value="'+esc(p.co)+'" aria-label="País"></td><td><input class="in w-s" data-f="ty" list="dlType" value="'+esc(p.ty)+'" aria-label="Tipo"></td>'
    +'<td>'+inp('shares','m w-x',p.shares,'Acciones').replace('class="in','inputmode="decimal" class="in')+'</td><td>'+inp('price','m w-x',p.price,'Precio').replace('class="in','inputmode="decimal" class="in')+'</td>'
    +'<td><input class="in m w-x" data-f="value" inputmode="decimal" value="'+esc(val)+'" '+(auto?'readonly':'')+' aria-label="Valor actual"></td>'
    +'<td>'+inp('cost','m w-x',p.cost,'Coste total').replace('class="in','inputmode="decimal" class="in')+'</td><td>'+inp('div','m w-x',p.div,'Dividendos al año').replace('class="in','inputmode="decimal" class="in')+'</td><td>'+inp('drop','m w-x',p.drop,'Caída frente al máximo en porcentaje').replace('class="in','inputmode="decimal" class="in')+'</td>'
@@ -898,6 +978,7 @@ function updateLists(){
   var sec={},ty={};['Tecnología','Salud','Financieros','Consumo Básico','Discrecional','Comunicación','Industriales','Energía','Inmobiliario','Bonos','Materiales','Servicios públicos'].forEach(function(x){sec[x]=1});['Largo plazo','Dividendos','Especulativa'].forEach(function(x){ty[x]=1});
   S.positions.forEach(function(p){if(has(p.s))sec[String(p.s).trim()]=1;if(has(p.ty))ty[String(p.ty).trim()]=1});
   $('dlSector').innerHTML=Object.keys(sec).map(function(x){return '<option value="'+esc(x)+'">'}).join('');
+  $('dlCountry').innerHTML=CT.map(function(c){return '<option value="'+esc(c[0])+'">'}).join('');
   $('dlType').innerHTML=Object.keys(ty).map(function(x){return '<option value="'+esc(x)+'">'}).join('');
 }
 function histInfo(){var n=parseHistory(S.history).length,l=String(S.history||'').split(/\r?\n/).filter(function(x){return x.trim()}).length;$('histInfo').textContent=l?n+' de '+l+' líneas válidas':''}
@@ -959,7 +1040,7 @@ $('edBody').addEventListener('click',function(e){
   renderEditor();changed();
 });
 $('bAdd').addEventListener('click',function(){
-  var p={id:uid(),t:'',n:'',s:'',ty:'',shares:'',price:'',value:'',cost:'',div:'',drop:''};
+  var p={id:uid(),t:'',n:'',s:'',ty:'',co:'',shares:'',price:'',value:'',cost:'',div:'',drop:''};
   S.positions.push(p);renderEditor();changed();
   var inp=document.querySelector('#edBody tr:last-child input');if(inp)inp.focus();
 });
@@ -991,8 +1072,8 @@ function parseCsv(text){
   return rows.filter(function(r){return r.some(function(x){return x.trim()!==''})});
 }
 function norm(s){return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'')}
-var HMAP={ticker:'t',simbolo:'t',symbol:'t',empresa:'n',nombre:'n',name:'n',company:'n',sector:'s',tipo:'ty',type:'ty',acciones:'shares',shares:'shares',cantidad:'shares',qty:'shares',precio:'price',price:'price',valor:'value',value:'value',importe:'value',valoractual:'value',marketvalue:'value',coste:'cost',costo:'cost',cost:'cost',costtotal:'cost',costetotal:'cost',dividendos:'div',dividendo:'div',dividendosano:'div',dividendoanual:'div',div:'div',dividends:'div',vsmax:'drop',max:'drop',caida:'drop',drop:'drop'};
-var ORDER=['t','n','s','ty','shares','price','value','cost','div','drop'];
+var HMAP={ticker:'t',simbolo:'t',symbol:'t',empresa:'n',nombre:'n',name:'n',company:'n',sector:'s',tipo:'ty',type:'ty',acciones:'shares',shares:'shares',cantidad:'shares',qty:'shares',precio:'price',price:'price',valor:'value',value:'value',importe:'value',valoractual:'value',marketvalue:'value',coste:'cost',costo:'cost',cost:'cost',costtotal:'cost',costetotal:'cost',dividendos:'div',dividendo:'div',dividendosano:'div',dividendoanual:'div',div:'div',dividends:'div',vsmax:'drop',max:'drop',caida:'drop',drop:'drop',pais:'co',country:'co',paisorigen:'co',countrycode:'co',codigopais:'co'};
+var ORDER=['t','n','s','ty','shares','price','value','cost','div','drop','co'];
 function importText(replace){
   var txt=$('impText').value.trim(),msg=$('impMsg');
   msg.className='msg';
@@ -1009,7 +1090,7 @@ function importText(replace){
   if(!isHeader){map=ORDER.slice(0,rows[0].length);} else rows=rows.slice(1);
   var out=[];
   rows.forEach(function(r){
-    var p={id:uid(),t:'',n:'',s:'',ty:'',shares:'',price:'',value:'',cost:'',div:'',drop:''};
+    var p={id:uid(),t:'',n:'',s:'',ty:'',co:'',shares:'',price:'',value:'',cost:'',div:'',drop:''};
     r.forEach(function(cell,i){var f=map[i];if(f)p[f]=cell.trim()});
     if(p.t||p.n)out.push(p);
   });
@@ -1055,7 +1136,7 @@ function importTR(rows){
   order.forEach(function(key){
     var p=pos[key];if(p.shares<1e-6)return;
     var m=ISIN[key],t=m?m[0]:key,o=old[t.toUpperCase()]||{};
-    out.push({id:uid(),t:t,n:p.n,s:o.s||(m?m[1]:''),ty:o.ty||'',shares:Math.round(p.shares*1e6)/1e6,price:o.price||'',value:round2(p.cost),cost:round2(p.cost),div:divs[key]?round2(divs[key]):'',drop:o.drop||''});
+    out.push({id:uid(),t:t,n:p.n,s:o.s||(m?m[1]:''),ty:o.ty||'',co:o.co||TICKER_CO[t]||countryFromIsin(key,p.n),shares:Math.round(p.shares*1e6)/1e6,price:o.price||'',value:round2(p.cost),cost:round2(p.cost),div:divs[key]?round2(divs[key]):'',drop:o.drop||''});
   });
   if(!out.length){msg.textContent='En el archivo no hay posiciones abiertas.';msg.className='msg err';return}
   if(S.example)S=blankState();
@@ -1067,8 +1148,10 @@ function importTR(rows){
   structural();
   var u=Object.keys(unk);
   msg.textContent='Trade Republic: '+out.length+(out.length===1?' posición':' posiciones')+', efectivo estimado '+money(S.cash===''?0:num(S.cash))+', aportado '+money(num(S.contributed))+', realizada '+money(num(S.realized))+'. Añade el precio actual de cada posición: hasta entonces el valor mostrado es el coste.'+(u.length?' Movimientos no reconocidos: '+u.join(', ')+'.':'');
+  var noco=out.filter(function(x){return !x.co}).length;
   var nos=out.filter(function(x){return !x.s}).length;
   if(nos)msg.textContent+=' '+nos+(nos===1?' posición no tiene':' posiciones no tienen')+' sector: Trade Republic no lo incluye en el CSV. Pulsa «Detectar tickers y sectores» (necesita tu clave de Finnhub) o asígnalo a mano en la tabla de «Posiciones» de abajo.';
+  if(noco)msg.textContent+=' '+noco+(noco===1?' posición no tiene':' posiciones no tienen')+' país (por ejemplo, fondos domiciliados en Irlanda): indícalo en la columna País.';
   msg.className='msg okk';$('impText').value='';
 }
 $('impFile').addEventListener('click',function(){$('impFileIn').click()});
@@ -1093,8 +1176,8 @@ function offer(name,data,ok){
 }
 $('bExpCsv').addEventListener('click',function(){
   if(!S.positions.length){$('actMsg').textContent='No hay posiciones que exportar.';return}
-  var head='ticker,empresa,sector,tipo,acciones,precio,valor,coste,dividendos,vs_max';
-  var lines=S.positions.map(function(p){return [p.t,p.n,p.s,p.ty,p.shares,p.price,p.value,p.cost,p.div,p.drop].map(q).join(',')});
+  var head='ticker,empresa,sector,tipo,acciones,precio,valor,coste,dividendos,vs_max,pais';
+  var lines=S.positions.map(function(p){return [p.t,p.n,p.s,p.ty,p.shares,p.price,p.value,p.cost,p.div,p.drop,p.co].map(q).join(',')});
   offer('posiciones.csv',head+'\n'+lines.join('\n')+'\n','Archivo listo.');
 });
 $('bExpJson').addEventListener('click',function(){offer('portfolio-matrix-copia.json',JSON.stringify(snap(),null,2),'Copia lista. Para restaurarla, pégala en Importar.')});
@@ -1167,8 +1250,8 @@ function detMsg(t,c){var e=document.getElementById('detMsg');e.textContent=t;e.c
 async function detectInfo(){
   if(detBusy)return;
   var isinRe=/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
-  var todo=S.positions.filter(function(p){var t=String(p.t||'').trim().toUpperCase();return isinRe.test(t)||(!has(p.s)&&t)});
-  if(!todo.length){detMsg('Todas las posiciones tienen ya ticker y sector.','okk');return}
+  var todo=S.positions.filter(function(p){var t=String(p.t||'').trim().toUpperCase();return isinRe.test(t)||((!has(p.s)||!has(p.co))&&t)});
+  if(!todo.length){detMsg('Todas las posiciones tienen ya ticker, sector y país.','okk');return}
   var key=getKey();if(!key){detMsg(updErr({code:'nokey'}),'err');return}
   detBusy=true;document.getElementById('bDetect').disabled=true;
   var found=0,miss=[],stop=null;
@@ -1182,6 +1265,7 @@ async function detectInfo(){
       var sec=mapInd(q.finnhubIndustry),did=false;
       if(isIsin){p.t=q.ticker;did=true}
       if(!has(p.s)&&sec){p.s=sec;did=true}
+      if(!has(p.co)&&q.country){var cc=findCountry(q.country);if(cc){p.co=cc[0];did=true}}
       if(did)found++;else miss.push(p.n||t);
     }
   }catch(e){stop=e}
